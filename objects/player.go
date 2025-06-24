@@ -9,6 +9,8 @@ type Player struct {
 	GameEngine *gameengine.GameEngine
 	ID         int
 	Name       string
+	Apple      uint32
+	X          float32
 }
 
 func NewPlayer(gameEngine *gameengine.GameEngine, id int, name string) *Player {
@@ -19,21 +21,29 @@ func NewPlayer(gameEngine *gameengine.GameEngine, id int, name string) *Player {
 	}
 }
 
-func (p Player) Start() {
-	println("Player started:", p.Name, "with ID:", p.ID)
+func (p *Player) Start() {
+	var err error
+
+	p.Apple, err = render.LoadTexture("./assets/apple.png")
+	println("Loading apple texture:", p.Apple)
+
+	if err != nil {
+		println("Failed to load apple texture: %v", err)
+		return
+	}
 }
 
-func (p Player) Update() {
+func (p *Player) Update() {
+	p.X += 300 * float32(p.GameEngine.DeltaTime)
 }
 
-func (p Player) Render() {
-	triangle := render.NewTriangle2D([]float32{
-		-0.5, -0.5,
-		0.5, -0.5,
-		0.0, 0.5,
-	})
-	triangle.Draw()
+func (p *Player) Render() {
+	if p.GameEngine == nil || p.GameEngine.Window == nil {
+		return
+	}
+	w, h := p.GameEngine.Window.GetSize()
+	render.DrawTexturedQuadWithWindow(p.Apple, p.X, 0, 100, 100, w, h)
 }
 
-func (p Player) Destroy() {
+func (p *Player) Destroy() {
 }

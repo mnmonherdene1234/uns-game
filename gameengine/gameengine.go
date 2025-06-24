@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/go-gl/gl/v4.6-core/gl"
+	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 )
 
@@ -23,12 +23,20 @@ func NewGameEngine(name string) *GameEngine {
 	return &GameEngine{Name: name, Objects: make([]GameObject, 0)}
 }
 
+func (ge *GameEngine) Start() error {
+	if err := ge.InitWindow(800, 600, ge.Name); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (ge *GameEngine) InitWindow(width, height int, title string) error {
 	if err := glfw.Init(); err != nil {
 		return err
 	}
-	glfw.WindowHint(glfw.ContextVersionMajor, 4)
-	glfw.WindowHint(glfw.ContextVersionMinor, 6)
+	glfw.WindowHint(glfw.ContextVersionMajor, 3)
+	glfw.WindowHint(glfw.ContextVersionMinor, 3)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	window, err := glfw.CreateWindow(width, height, title, nil, nil)
 	if err != nil {
@@ -73,7 +81,9 @@ func (ge *GameEngine) update() {
 }
 
 func (ge *GameEngine) render() {
-	gl.ClearColor(0.9, 0.3, 0.9, 1.0)
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	gl.ClearColor(0, 0, 1, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
 	for _, obj := range ge.Objects {

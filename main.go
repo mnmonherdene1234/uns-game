@@ -8,7 +8,7 @@ import (
 func main() {
 	engine := gameengine.NewGameEngine("UNS Game")
 
-	if err := engine.InitWindow(800, 600, "Game Engine Example"); err != nil {
+	if err := engine.Start(); err != nil {
 		panic(err)
 	}
 
