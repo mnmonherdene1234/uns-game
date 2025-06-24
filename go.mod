@@ -1,4 +1,4 @@
-module uns
+module github.com/mnmonherdene1234/uns-game
 
 go 1.24.3
 

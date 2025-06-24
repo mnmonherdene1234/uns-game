@@ -9,16 +9,18 @@ import (
 )
 
 type GameEngine struct {
-	window    *glfw.Window
-	deltaTime float64
+	Name      string
+	Objects   []GameObject
+	Window    *glfw.Window
+	DeltaTime float64
 }
 
 func init() {
 	runtime.LockOSThread() // Required for OpenGL
 }
 
-func NewGameEngine() *GameEngine {
-	return &GameEngine{}
+func NewGameEngine(name string) *GameEngine {
+	return &GameEngine{Name: name, Objects: make([]GameObject, 0)}
 }
 
 func (ge *GameEngine) InitWindow(width, height int, title string) error {
@@ -36,28 +38,28 @@ func (ge *GameEngine) InitWindow(width, height int, title string) error {
 	if err := gl.Init(); err != nil {
 		return err
 	}
-	ge.window = window
+	ge.Window = window
 	return nil
 }
 
 func (ge *GameEngine) Loop() {
 	var lastTime = time.Now()
-	for !ge.window.ShouldClose() {
+	for !ge.Window.ShouldClose() {
 		now := time.Now()
-		ge.deltaTime = now.Sub(lastTime).Seconds()
+		ge.DeltaTime = now.Sub(lastTime).Seconds()
 		lastTime = now
 
 		ge.input()
 		ge.update()
 		ge.render()
 	}
-	ge.window.Destroy()
+	ge.Window.Destroy()
 	glfw.Terminate()
 }
 
 func (ge *GameEngine) input() {
-	if ge.window.GetKey(glfw.KeyEscape) == glfw.Press {
-		ge.window.SetShouldClose(true)
+	if ge.Window.GetKey(glfw.KeyEscape) == glfw.Press {
+		ge.Window.SetShouldClose(true)
 	}
 	// Add more input handling as needed
 }
@@ -65,14 +67,34 @@ func (ge *GameEngine) input() {
 func (ge *GameEngine) update() {
 	// Update game state logic here
 	// This is where you would update positions, handle collisions, etc.
-	println("Updating game state, deltaTime:", ge.deltaTime)
+	for _, obj := range ge.Objects {
+		obj.Update()
+	}
 }
 
 func (ge *GameEngine) render() {
-	// OpenGL rendering
 	gl.ClearColor(0.9, 0.3, 0.9, 1.0)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
-	ge.window.SwapBuffers()
+	for _, obj := range ge.Objects {
+		obj.Render()
+	}
+
+	ge.Window.SwapBuffers()
 	glfw.PollEvents()
+}
+
+func (ge *GameEngine) AddObject(obj GameObject) {
+	ge.Objects = append(ge.Objects, obj)
+	obj.Start()
+}
+
+func (ge *GameEngine) RemoveObject(obj GameObject) {
+	for i, o := range ge.Objects {
+		if o == obj {
+			o.Destroy()
+			ge.Objects = append(ge.Objects[:i], ge.Objects[i+1:]...)
+			return
+		}
+	}
 }
