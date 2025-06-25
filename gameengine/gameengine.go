@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/mnmonherdene1234/uns-game/gameengine/render"
 )
 
 type GameEngine struct {
@@ -24,9 +25,11 @@ func NewGameEngine(name string) *GameEngine {
 }
 
 func (ge *GameEngine) Start() error {
-	if err := ge.InitWindow(800, 600, ge.Name); err != nil {
+	if err := ge.InitWindow(1920, 1080, ge.Name); err != nil {
 		return err
 	}
+
+	render.InitQuadShader()
 
 	return nil
 }
@@ -38,7 +41,11 @@ func (ge *GameEngine) InitWindow(width, height int, title string) error {
 	glfw.WindowHint(glfw.ContextVersionMajor, 3)
 	glfw.WindowHint(glfw.ContextVersionMinor, 3)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
-	window, err := glfw.CreateWindow(width, height, title, nil, nil)
+
+	// Get the primary monitor for fullscreen
+	monitor := glfw.GetPrimaryMonitor()
+	mode := monitor.GetVideoMode()
+	window, err := glfw.CreateWindow(mode.Width, mode.Height, title, monitor, nil)
 	if err != nil {
 		return err
 	}

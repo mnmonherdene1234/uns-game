@@ -11,26 +11,27 @@ import (
 	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
-// LoadTexture loads an image file and creates an OpenGL texture.
+// LoadTexture loads an image from disk and creates an OpenGL texture from it.
+// Returns the texture ID and an error if something goes wrong.
 func LoadTexture(path string) (uint32, error) {
-	file, err := os.Open(path)
+	file, err := os.Open(path) // Open the image file
 	if err != nil {
-		return 0, err
+		return 0, err // Return error if file can't be opened
 	}
 	defer file.Close()
 
-	img, _, err := image.Decode(file)
+	img, _, err := image.Decode(file) // Decode the image (supports PNG/JPEG)
 	if err != nil {
-		return 0, err
+		return 0, err // Return error if image can't be decoded
 	}
 
-	rgba := image.NewRGBA(img.Bounds())
-	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
+	rgba := image.NewRGBA(img.Bounds())                              // Create a new RGBA image
+	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src) // Copy the image into RGBA format
 
 	var texture uint32
-	gl.GenTextures(1, &texture)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.GenTextures(1, &texture)                                       // Generate a new texture ID
+	gl.BindTexture(gl.TEXTURE_2D, texture)                            // Bind the texture so we can work with it
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR) // Set texture filtering
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	gl.TexImage2D(
 		gl.TEXTURE_2D,
@@ -41,15 +42,16 @@ func LoadTexture(path string) (uint32, error) {
 		0,
 		gl.RGBA,
 		gl.UNSIGNED_BYTE,
-		unsafe.Pointer(&rgba.Pix[0]),
+		unsafe.Pointer(&rgba.Pix[0]), // Pass the pixel data to OpenGL
 	)
-	gl.BindTexture(gl.TEXTURE_2D, 0)
-	return texture, nil
+	gl.BindTexture(gl.TEXTURE_2D, 0) // Unbind the texture
+	return texture, nil              // Return the texture ID
 }
 
+// The following variables and constants are used for drawing textured rectangles (quads) on the screen.
 var (
-	quadShaderProgram uint32
-	shaderInitialized bool
+	quadShaderProgram uint32 // Stores the shader program ID
+	shaderInitialized bool   // Tracks if the shader has been set up
 )
 
 const (
@@ -71,10 +73,13 @@ void main() {
 }`
 )
 
-func initQuadShader(windowWidth, windowHeight int) {
+// Initializes the shader program for drawing textured quads.
+// Only runs once.
+func InitQuadShader() {
 	if shaderInitialized {
 		return
 	}
+	// Compile vertex and fragment shaders, link them into a program
 	vertexShader := gl.CreateShader(gl.VERTEX_SHADER)
 	csource, free := gl.Strs(vertexShaderSource + "\x00")
 	gl.ShaderSource(vertexShader, 1, csource, nil)
@@ -98,6 +103,7 @@ func initQuadShader(windowWidth, windowHeight int) {
 	shaderInitialized = true
 }
 
+// Creates an orthographic projection matrix for 2D rendering.
 func ortho(left, right, bottom, top, near, far float32) [16]float32 {
 	return [16]float32{
 		2 / (right - left), 0, 0, 0,
@@ -107,16 +113,16 @@ func ortho(left, right, bottom, top, near, far float32) [16]float32 {
 	}
 }
 
-// DrawTexturedQuad draws a textured quad at (x, y) with given width and height.
-// windowWidth and windowHeight are required for orthographic projection.
+// DrawTexturedQuadWithWindow draws a textured rectangle (quad) at (x, y) with the given width and height.
+// windowWidth and windowHeight are needed for correct placement on the screen.
 func DrawTexturedQuadWithWindow(texture uint32, x, y, width, height float32, windowWidth, windowHeight int) {
-	initQuadShader(windowWidth, windowHeight)
-	gl.UseProgram(quadShaderProgram)
+	gl.UseProgram(quadShaderProgram) // Use the shader program
 
-	proj := ortho(0, float32(windowWidth), float32(windowHeight), 0, -1, 1)
+	proj := ortho(0, float32(windowWidth), float32(windowHeight), 0, -1, 1) // Set up projection
 	projLoc := gl.GetUniformLocation(quadShaderProgram, gl.Str("projection\x00"))
 	gl.UniformMatrix4fv(projLoc, 1, false, &proj[0])
 
+	// Define the quad's vertices and texture coordinates
 	vertices := []float32{
 		x, y, 0, 0, 0,
 		x + width, y, 0, 1, 0,
@@ -125,6 +131,7 @@ func DrawTexturedQuadWithWindow(texture uint32, x, y, width, height float32, win
 	}
 	indices := []uint32{0, 1, 2, 2, 3, 0}
 
+	// Set up OpenGL buffers and attributes
 	var vao, vbo, ebo uint32
 	gl.GenVertexArrays(1, &vao)
 	gl.GenBuffers(1, &vbo)
@@ -142,12 +149,13 @@ func DrawTexturedQuadWithWindow(texture uint32, x, y, width, height float32, win
 	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, gl.Ptr(uintptr(3*4)))
 
 	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
+	gl.BindTexture(gl.TEXTURE_2D, texture) // Bind the texture to use
 	texLoc := gl.GetUniformLocation(quadShaderProgram, gl.Str("tex\x00"))
 	gl.Uniform1i(texLoc, 0)
 
-	gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)
+	gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil) // Draw the quad
 
+	// Clean up (unbind and delete buffers)
 	gl.BindTexture(gl.TEXTURE_2D, 0)
 	gl.DisableVertexAttribArray(0)
 	gl.DisableVertexAttribArray(1)

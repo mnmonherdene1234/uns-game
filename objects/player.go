@@ -42,7 +42,7 @@ func (p *Player) Render() {
 		return
 	}
 	w, h := p.GameEngine.Window.GetSize()
-	render.DrawTexturedQuadWithWindow(p.Apple, p.X, 0, 100, 100, w, h)
+	render.DrawTexturedQuadWithWindow(p.Apple, p.X, 0, 50, 100, w, h)
 }
 
 func (p *Player) Destroy() {
