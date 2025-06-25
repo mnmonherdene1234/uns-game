@@ -10,21 +10,26 @@ import (
 )
 
 type GameEngine struct {
-	Name      string
-	Objects   []GameObject
-	Window    *glfw.Window
-	DeltaTime float64
-}
-
-func init() {
-	runtime.LockOSThread() // Required for OpenGL
+	Name          string
+	Objects       []GameObject
+	AssetsManager *AssetsManager
+	Logger        *Logger
+	Window        *glfw.Window
+	DeltaTime     float64
 }
 
 func NewGameEngine(name string) *GameEngine {
-	return &GameEngine{Name: name, Objects: make([]GameObject, 0)}
+	return &GameEngine{
+		Name:          name,
+		Objects:       make([]GameObject, 0),
+		AssetsManager: NewAssetsManager(),
+		Logger:        NewLogger("./game.log"),
+	}
 }
 
 func (ge *GameEngine) Start() error {
+	runtime.LockOSThread() // Ensure the main thread is the OpenGL thread
+
 	if err := ge.InitWindow(1920, 1080, ge.Name); err != nil {
 		return err
 	}
@@ -90,7 +95,7 @@ func (ge *GameEngine) update() {
 func (ge *GameEngine) render() {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-	gl.ClearColor(0, 0, 1, 0)
+	gl.ClearColor(0, 0, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
 	for _, obj := range ge.Objects {

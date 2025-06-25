@@ -12,9 +12,13 @@ func main() {
 		panic(err)
 	}
 
-	player := objects.NewPlayer(engine, 1, "Player 1")
+	engine.AssetsManager.AddImage("./assets/images/apple.png", "apple")
+	engine.AssetsManager.AddImage("./assets/images/grass1.png", "grass1")
+	engine.AssetsManager.LoadImages()
 
-	engine.AddObject(player)
+	engine.AddObject(objects.NewGrass(engine, 1920/2, 1080/2))
+
+	engine.Logger.Info("Game engine started successfully")
 
 	engine.Loop()
 }
