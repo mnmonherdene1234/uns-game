@@ -8,6 +8,8 @@ import (
 	"github.com/mnmonherdene1234/uns-game/utils"
 )
 
+var GrassLimit = 10
+
 type Grass struct {
 	GameEngine                  *gameengine.GameEngine
 	X                           float32
@@ -25,7 +27,7 @@ type Grass struct {
 
 func NewGrass(gameEngine *gameengine.GameEngine, x, y float32) *Grass {
 
-	randomReproductionCooldownSeconds := utils.RandomFloat32(5.0, 15.0) // Random cooldown between 5 and 15 seconds
+	randomReproductionCooldownSeconds := utils.RandomFloat32(3.0, 15.0) // Random cooldown between 5 and 15 seconds
 
 	return &Grass{
 		GameEngine:                  gameEngine,
@@ -35,8 +37,8 @@ func NewGrass(gameEngine *gameengine.GameEngine, x, y float32) *Grass {
 		H:                           0,
 		Growth:                      0.0,
 		GrowthRate:                  0.001,
-		MaxWidth:                    100.0,
-		MaxHeight:                   100.0,
+		MaxWidth:                    256 * 0.3,
+		MaxHeight:                   247 * 0.3,
 		ReproductionCooldownSeconds: randomReproductionCooldownSeconds, // Cooldown in seconds for reproduction
 	}
 }
@@ -50,35 +52,23 @@ func (g *Grass) Start() {
 	}
 }
 
+func totalGrassCount(gameEngine *gameengine.GameEngine) int {
+	count := 0
+	for _, obj := range gameEngine.Objects {
+		if _, ok := obj.(*Grass); ok {
+			count++
+		}
+	}
+	return count
+}
+
 func (g *Grass) Update() {
 	g.Growth += g.GrowthRate
 	if g.Growth > 1.0 {
 		g.Growth = 1.0
 	}
 
-	if g.Growth == 1.0 {
-		now := time.Now()
-
-		if g.ReproductedDate.IsZero() || now.Sub(g.ReproductedDate).Seconds() >= float64(g.ReproductionCooldownSeconds) {
-			g.ReproductedDate = now
-
-			var maxDistance float32 = 150.0 // Maximum distance for reproduction
-
-			randomX := utils.RandomFloat32(g.X-maxDistance, g.X+maxDistance)
-
-			if randomX < 0 {
-				randomX = 0
-			}
-
-			randomY := utils.RandomFloat32(g.Y-maxDistance, g.Y+maxDistance)
-
-			if randomY < 0 {
-				randomY = 0
-			}
-
-			g.GameEngine.AddObject(NewGrass(g.GameEngine, randomX, randomY))
-		}
-	}
+	g.Reproduction()
 
 	previousWidth := g.W
 	g.W = g.MaxWidth * g.Growth
@@ -105,4 +95,36 @@ func (g *Grass) Render() {
 }
 
 func (g *Grass) Destroy() {
+}
+
+func (g *Grass) Reproduction() {
+	if g.Growth < 1.0 {
+		return // Grass is not fully grown, do not reproduce
+	}
+
+	if totalGrassCount(g.GameEngine) >= GrassLimit {
+		return // Limit reached, do not reproduce
+	}
+
+	now := time.Now()
+
+	if g.ReproductedDate.IsZero() || now.Sub(g.ReproductedDate).Seconds() >= float64(g.ReproductionCooldownSeconds) {
+		g.ReproductedDate = now
+
+		var maxDistance float32 = 150.0 // Maximum distance for reproduction
+
+		randomX := utils.RandomFloat32(g.X-maxDistance, g.X+maxDistance)
+
+		if randomX < 0 {
+			randomX = 0
+		}
+
+		randomY := utils.RandomFloat32(g.Y-maxDistance, g.Y+maxDistance)
+
+		if randomY < 0 {
+			randomY = 0
+		}
+
+		g.GameEngine.AddObject(NewGrass(g.GameEngine, randomX, randomY))
+	}
 }
