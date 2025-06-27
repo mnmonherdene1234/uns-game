@@ -30,7 +30,7 @@ func NewGameEngine(name string) *GameEngine {
 func (ge *GameEngine) Start() error {
 	runtime.LockOSThread() // Ensure the main thread is the OpenGL thread
 
-	if err := ge.InitWindow(1920, 1080, ge.Name); err != nil {
+	if err := ge.InitWindow(1280, 720, ge.Name); err != nil {
 		return err
 	}
 
@@ -47,10 +47,8 @@ func (ge *GameEngine) InitWindow(width, height int, title string) error {
 	glfw.WindowHint(glfw.ContextVersionMinor, 3)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 
-	// Get the primary monitor for fullscreen
-	monitor := glfw.GetPrimaryMonitor()
-	mode := monitor.GetVideoMode()
-	window, err := glfw.CreateWindow(mode.Width, mode.Height, title, monitor, nil)
+	// Windowed mode 1280x720
+	window, err := glfw.CreateWindow(width, height, title, nil, nil)
 	if err != nil {
 		return err
 	}
