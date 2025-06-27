@@ -8,7 +8,7 @@ import (
 	"github.com/mnmonherdene1234/uns-game/utils"
 )
 
-var GrassLimit = 10
+var GrassLimit = 100
 
 type Grass struct {
 	GameEngine                  *gameengine.GameEngine
@@ -22,6 +22,7 @@ type Grass struct {
 	MaxHeight                   float32
 	ReproductionCooldownSeconds float32
 	ReproductedDate             time.Time
+	CreatedDate                 time.Time
 	ImageID                     uint32
 }
 
