@@ -8,7 +8,7 @@ import (
 	"github.com/mnmonherdene1234/uns-game/utils"
 )
 
-var GrassLimit = 100
+var GrassLimit = 99999
 
 type Grass struct {
 	GameEngine                  *gameengine.GameEngine

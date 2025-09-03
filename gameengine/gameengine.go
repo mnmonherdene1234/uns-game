@@ -86,7 +86,7 @@ func (ge *GameEngine) update() {
 	// Update game state logic here
 	// This is where you would update positions, handle collisions, etc.
 	for _, obj := range ge.Objects {
-		obj.Update()
+		go obj.Update()
 	}
 }
 
